@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 const COLORS = ['#6366f1', '#fbbf24', '#34d399', '#f87171'];
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -545,7 +546,7 @@ const Dashboard = () => {
                             {app.status === 'Offered' && app.offer_letter_path && (
                               <div style={{ marginTop: '0.4rem' }}>
                                 <a 
-                                  href={`http://localhost:5000${app.offer_letter_path}`} 
+                                  href={`${BASE_URL}${app.offer_letter_path}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
                                   className="btn btn-secondary btn-sm"
@@ -568,7 +569,7 @@ const Dashboard = () => {
                           </td>
                           <td>
                             <a
-                              href={`http://localhost:5000${app.resume_path}`}
+                              href={`${BASE_URL}${app.resume_path}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn-link"
@@ -695,7 +696,7 @@ const Dashboard = () => {
                           <td>
                             <div className="flex-align gap-sm">
                               <a
-                                href={`http://localhost:5000${app.resume_path}`}
+                                href={`${BASE_URL}${app.resume_path}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="btn btn-secondary btn-sm"
@@ -761,7 +762,7 @@ const Dashboard = () => {
 
                               {app.status === 'Offered' && app.offer_letter_path && (
                                 <a
-                                  href={`http://localhost:5000${app.offer_letter_path}`}
+                                  href={`${BASE_URL}${app.offer_letter_path}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="btn btn-secondary btn-sm"
@@ -882,7 +883,7 @@ const Dashboard = () => {
                           <td>{new Date(app.applied_at).toLocaleDateString()}</td>
                           <td>
                             <a
-                              href={`http://localhost:5000${app.resume_path}`}
+                              href={`${BASE_URL}${app.resume_path}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn btn-secondary btn-sm"
