@@ -256,11 +256,13 @@ exports.scheduleInterview = async (req, res) => {
       </div>
     `;
 
-    await sendMail({
+    sendMail({
       to: app.seeker_email,
       subject: emailSubject,
       text: emailText,
       html: emailHtml
+    }).catch(err => {
+      console.error('Failed to send interview invitation email:', err.message);
     });
 
     res.status(200).json({ 
@@ -538,7 +540,7 @@ exports.sendOfferLetter = async (req, res) => {
       </div>
     `;
 
-    await sendMail({
+    sendMail({
       to: app.seeker_email,
       subject: emailSubject,
       text: emailText,
@@ -549,6 +551,8 @@ exports.sendOfferLetter = async (req, res) => {
           path: absolutePdfPath
         }
       ]
+    }).catch(err => {
+      console.error('Failed to send offer letter email:', err.message);
     });
 
     res.status(200).json({

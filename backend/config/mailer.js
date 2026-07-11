@@ -25,6 +25,9 @@ if (isSmtpConfigured) {
       user: process.env.SMTP_USER || process.env.EMAIL_USER,
       pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
     },
+    connectionTimeout: 3000,
+    greetingTimeout: 3000,
+    socketTimeout: 5000
   });
   console.log('Mailer: SMTP transporter initialized.');
 } else {
