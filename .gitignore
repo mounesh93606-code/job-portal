@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.npm
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Uploaded files (user resumes etc.)
+backend/uploads/resumes/*
+!backend/uploads/resumes/.gitkeep
+
+# Misc
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Tunnel/temp files
+pinggy.log
+pinggy_frontend.log
+lt.log
+backend/tunnel_url.txt
+backend/tunnel.js
+backend/generate_ssh.js
+backend/setup.js
+database/setup.js
