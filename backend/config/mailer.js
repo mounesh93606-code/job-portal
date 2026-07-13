@@ -1,6 +1,5 @@
-const nodemailer = require('nodemailer');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const sentEmailsDir = path.join(__dirname, '../sent_emails');
@@ -8,34 +7,21 @@ if (!fs.existsSync(sentEmailsDir)) {
   fs.mkdirSync(sentEmailsDir, { recursive: true });
 }
 
-// Check if SMTP is configured
-const isSmtpConfigured = (
-  (process.env.EMAIL_USER && process.env.EMAIL_PASS) ||
-  (process.env.SMTP_USER && process.env.SMTP_PASS)
-);
+// Check if Resend API key is configured
+const resendApiKey = process.env.RESEND_API_KEY;
 
-let transporter = null;
+let resendClient = null;
 
-if (isSmtpConfigured) {
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER || process.env.EMAIL_USER,
-      pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
-    },
-    connectionTimeout: 3000,
-    greetingTimeout: 3000,
-    socketTimeout: 5000
-  });
-  console.log('Mailer: SMTP transporter initialized.');
+if (resendApiKey) {
+  const { Resend } = require('resend');
+  resendClient = new Resend(resendApiKey);
+  console.log('Mailer: Resend API client initialized.');
 } else {
-  console.log('Mailer: SMTP credentials not set. Falling back to local file logging in backend/sent_emails/.');
+  console.log('Mailer: RESEND_API_KEY not set. Falling back to local file logging in backend/sent_emails/.');
 }
 
 /**
- * Sends an email
+ * Sends an email using Resend API (works over HTTPS, not blocked by Railway)
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
@@ -44,27 +30,42 @@ if (isSmtpConfigured) {
  * @param {Array} [options.attachments] - Attachments list (e.g. { filename, path })
  */
 const sendMail = async (options) => {
-  const fromEmail = process.env.SMTP_USER || process.env.EMAIL_USER || 'no-reply@apexhire.com';
+  const fromEmail = 'ApexHire <onboarding@resend.dev>';
   
-  if (transporter) {
+  if (resendClient) {
     try {
-      const info = await transporter.sendMail({
-        from: `"ApexHire Recruitment" <${fromEmail}>`,
-        to: options.to,
+      // Convert file-path attachments to base64 for Resend
+      let resendAttachments = [];
+      if (options.attachments && options.attachments.length > 0) {
+        resendAttachments = options.attachments
+          .filter(att => att.path && fs.existsSync(att.path))
+          .map(att => ({
+            filename: att.filename,
+            content: fs.readFileSync(att.path)
+          }));
+      }
+
+      const { data, error } = await resendClient.emails.send({
+        from: fromEmail,
+        to: [options.to],
         subject: options.subject,
         text: options.text,
         html: options.html,
-        attachments: options.attachments,
+        attachments: resendAttachments.length > 0 ? resendAttachments : undefined
       });
-      console.log(`Mailer: Email sent successfully to ${options.to}. MessageID: ${info.messageId}`);
-      return info;
+
+      if (error) {
+        console.error('Mailer: Resend API error:', error);
+      } else {
+        console.log(`Mailer: Email sent successfully to ${options.to}. ID: ${data.id}`);
+        return data;
+      }
     } catch (error) {
-      console.error('Mailer: Error sending email via SMTP:', error.message);
-      // Fallback to local log even if SMTP fails
+      console.error('Mailer: Error sending email via Resend:', error.message);
     }
   }
 
-  // Fallback or Local Mock logger
+  // Fallback: save email to local file
   const timestamp = Date.now();
   const safeEmail = options.to.replace(/[^a-zA-Z0-9]/g, '_');
   const filename = `email_${safeEmail}_${timestamp}.json`;
@@ -72,7 +73,7 @@ const sendMail = async (options) => {
 
   const emailLog = {
     timestamp: new Date().toISOString(),
-    from: `"ApexHire Recruitment" <${fromEmail}>`,
+    from: fromEmail,
     to: options.to,
     subject: options.subject,
     text: options.text,
@@ -80,7 +81,7 @@ const sendMail = async (options) => {
     attachments: options.attachments ? options.attachments.map(att => ({
       filename: att.filename,
       path: att.path,
-      exists: fs.existsSync(att.path)
+      exists: att.path ? fs.existsSync(att.path) : false
     })) : []
   };
 
