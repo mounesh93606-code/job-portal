@@ -31,7 +31,14 @@ if (resendApiKey) {
  */
 const sendMail = async (options) => {
   const fromEmail = 'ApexHire <onboarding@resend.dev>';
-  
+
+  // Email override: redirect all emails to owner's inbox (used when domain not verified)
+  const mailOverride = process.env.MAIL_OVERRIDE;
+  const actualTo = mailOverride || options.to;
+  const overrideNote = mailOverride && mailOverride !== options.to
+    ? `<p style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:8px;font-size:0.8em;color:#856404;"><strong>[DEV REDIRECT]</strong> Originally addressed to: <code>${options.to}</code></p>`
+    : '';
+
   if (resendClient) {
     try {
       // Convert file-path attachments to base64 for Resend
@@ -47,17 +54,17 @@ const sendMail = async (options) => {
 
       const { data, error } = await resendClient.emails.send({
         from: fromEmail,
-        to: [options.to],
+        to: [actualTo],
         subject: options.subject,
         text: options.text,
-        html: options.html,
+        html: overrideNote + (options.html || ''),
         attachments: resendAttachments.length > 0 ? resendAttachments : undefined
       });
 
       if (error) {
         console.error('Mailer: Resend API error:', error);
       } else {
-        console.log(`Mailer: Email sent successfully to ${options.to}. ID: ${data.id}`);
+        console.log(`Mailer: Email sent successfully to ${actualTo}${mailOverride ? ` (override; original: ${options.to})` : ''}. ID: ${data.id}`);
         return data;
       }
     } catch (error) {
@@ -67,17 +74,18 @@ const sendMail = async (options) => {
 
   // Fallback: save email to local file
   const timestamp = Date.now();
-  const safeEmail = options.to.replace(/[^a-zA-Z0-9]/g, '_');
+  const safeEmail = actualTo.replace(/[^a-zA-Z0-9]/g, '_');
   const filename = `email_${safeEmail}_${timestamp}.json`;
   const filepath = path.join(sentEmailsDir, filename);
 
   const emailLog = {
     timestamp: new Date().toISOString(),
     from: fromEmail,
-    to: options.to,
+    to: actualTo,
+    originalTo: options.to,
     subject: options.subject,
     text: options.text,
-    html: options.html,
+    html: overrideNote + (options.html || ''),
     attachments: options.attachments ? options.attachments.map(att => ({
       filename: att.filename,
       path: att.path,
@@ -87,7 +95,7 @@ const sendMail = async (options) => {
 
   fs.writeFileSync(filepath, JSON.stringify(emailLog, null, 2), 'utf8');
   console.log(`Mailer: [MOCK EMAIL] Saved email details to ${filepath}`);
-  console.log(`Mailer: [MOCK EMAIL] Subject: "${options.subject}" sent to ${options.to}`);
+  console.log(`Mailer: [MOCK EMAIL] Subject: "${options.subject}" sent to ${actualTo}`);
   return { mock: true, filepath };
 };
 
