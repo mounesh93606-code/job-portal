@@ -7,98 +7,131 @@ if (!fs.existsSync(sentEmailsDir)) {
   fs.mkdirSync(sentEmailsDir, { recursive: true });
 }
 
-// Check if Resend API key is configured
-const resendApiKey = process.env.RESEND_API_KEY;
-
-let resendClient = null;
-
-if (resendApiKey) {
-  const { Resend } = require('resend');
-  resendClient = new Resend(resendApiKey);
-  console.log('Mailer: Resend API client initialized.');
-} else {
-  console.log('Mailer: RESEND_API_KEY not set. Falling back to local file logging in backend/sent_emails/.');
-}
-
 /**
- * Sends an email using Resend API (works over HTTPS, not blocked by Railway)
- * @param {Object} options - Email options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.text - Text body
- * @param {string} options.html - HTML body
- * @param {Array} [options.attachments] - Attachments list (e.g. { filename, path })
+ * Sends an email via Brevo API (primary - sends to ANY recipient, free, HTTPS - not blocked by Railway)
+ * Falls back to Resend if BREVO_API_KEY not set.
+ * Falls back to local file log if neither is configured.
+ *
+ * @param {Object} options
+ * @param {string} options.to        - Recipient email
+ * @param {string} options.subject   - Email subject
+ * @param {string} options.text      - Plain-text body
+ * @param {string} options.html      - HTML body
+ * @param {Array}  [options.attachments] - [{ filename, path }]
  */
 const sendMail = async (options) => {
-  const fromEmail = 'ApexHire <onboarding@resend.dev>';
+  const brevoKey    = process.env.BREVO_API_KEY;
+  const resendKey   = process.env.RESEND_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || 'onboarding@resend.dev';
+  const senderName  = 'ApexHire';
 
-  // Email override: redirect all emails to owner's inbox (used when domain not verified)
-  const mailOverride = process.env.MAIL_OVERRIDE;
-  const actualTo = mailOverride || options.to;
-  const overrideNote = mailOverride && mailOverride !== options.to
-    ? `<p style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:8px;font-size:0.8em;color:#856404;"><strong>[DEV REDIRECT]</strong> Originally addressed to: <code>${options.to}</code></p>`
-    : '';
-
-  if (resendClient) {
+  // ── 1. BREVO (primary) ──────────────────────────────────────────────────────
+  if (brevoKey) {
     try {
-      // Convert file-path attachments to base64 for Resend
+      const body = {
+        sender:      { name: senderName, email: senderEmail },
+        to:          [{ email: options.to }],
+        subject:     options.subject,
+        textContent: options.text  || '',
+        htmlContent: options.html  || '',
+      };
+
+      // Attachments (base64)
+      if (options.attachments && options.attachments.length > 0) {
+        body.attachment = options.attachments
+          .filter(att => att.path && fs.existsSync(att.path))
+          .map(att => ({
+            name:    att.filename,
+            content: fs.readFileSync(att.path).toString('base64'),
+          }));
+      }
+
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method:  'POST',
+        headers: {
+          'accept':       'application/json',
+          'api-key':      brevoKey,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('Mailer: Brevo API error:', JSON.stringify(data));
+        // fall through to Resend / file fallback
+      } else {
+        console.log(`Mailer: [Brevo] Email sent to ${options.to}. MessageId: ${data.messageId}`);
+        return data;
+      }
+    } catch (err) {
+      console.error('Mailer: Brevo fetch error:', err.message);
+    }
+  }
+
+  // ── 2. RESEND (secondary fallback) ─────────────────────────────────────────
+  if (resendKey) {
+    try {
+      const { Resend } = require('resend');
+      const resend = new Resend(resendKey);
+
+      // MAIL_OVERRIDE: redirect to owner inbox when Resend domain not verified
+      const mailOverride = process.env.MAIL_OVERRIDE;
+      const actualTo     = mailOverride || options.to;
+      const overrideNote = mailOverride && mailOverride !== options.to
+        ? `<p style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:8px;font-size:0.8em;color:#856404;"><strong>[REDIRECT]</strong> Originally addressed to: <code>${options.to}</code></p>`
+        : '';
+
       let resendAttachments = [];
       if (options.attachments && options.attachments.length > 0) {
         resendAttachments = options.attachments
           .filter(att => att.path && fs.existsSync(att.path))
-          .map(att => ({
-            filename: att.filename,
-            content: fs.readFileSync(att.path)
-          }));
+          .map(att => ({ filename: att.filename, content: fs.readFileSync(att.path) }));
       }
 
-      const { data, error } = await resendClient.emails.send({
-        from: fromEmail,
-        to: [actualTo],
-        subject: options.subject,
-        text: options.text,
-        html: overrideNote + (options.html || ''),
-        attachments: resendAttachments.length > 0 ? resendAttachments : undefined
+      const { data, error } = await resend.emails.send({
+        from:        `${senderName} <onboarding@resend.dev>`,
+        to:          [actualTo],
+        subject:     options.subject,
+        text:        options.text,
+        html:        overrideNote + (options.html || ''),
+        attachments: resendAttachments.length > 0 ? resendAttachments : undefined,
       });
 
       if (error) {
         console.error('Mailer: Resend API error:', error);
       } else {
-        console.log(`Mailer: Email sent successfully to ${actualTo}${mailOverride ? ` (override; original: ${options.to})` : ''}. ID: ${data.id}`);
+        console.log(`Mailer: [Resend] Email sent to ${actualTo}${mailOverride ? ` (redirect; original: ${options.to})` : ''}. ID: ${data.id}`);
         return data;
       }
-    } catch (error) {
-      console.error('Mailer: Error sending email via Resend:', error.message);
+    } catch (err) {
+      console.error('Mailer: Resend error:', err.message);
     }
   }
 
-  // Fallback: save email to local file
+  // ── 3. LOCAL FILE FALLBACK ──────────────────────────────────────────────────
   const timestamp = Date.now();
-  const safeEmail = actualTo.replace(/[^a-zA-Z0-9]/g, '_');
-  const filename = `email_${safeEmail}_${timestamp}.json`;
-  const filepath = path.join(sentEmailsDir, filename);
+  const safeEmail = options.to.replace(/[^a-zA-Z0-9]/g, '_');
+  const filename  = `email_${safeEmail}_${timestamp}.json`;
+  const filepath  = path.join(sentEmailsDir, filename);
 
-  const emailLog = {
+  fs.writeFileSync(filepath, JSON.stringify({
     timestamp: new Date().toISOString(),
-    from: fromEmail,
-    to: actualTo,
-    originalTo: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: overrideNote + (options.html || ''),
-    attachments: options.attachments ? options.attachments.map(att => ({
+    to:        options.to,
+    subject:   options.subject,
+    text:      options.text,
+    html:      options.html,
+    attachments: (options.attachments || []).map(att => ({
       filename: att.filename,
-      path: att.path,
-      exists: att.path ? fs.existsSync(att.path) : false
-    })) : []
-  };
+      path:     att.path,
+      exists:   att.path ? fs.existsSync(att.path) : false,
+    })),
+  }, null, 2), 'utf8');
 
-  fs.writeFileSync(filepath, JSON.stringify(emailLog, null, 2), 'utf8');
-  console.log(`Mailer: [MOCK EMAIL] Saved email details to ${filepath}`);
-  console.log(`Mailer: [MOCK EMAIL] Subject: "${options.subject}" sent to ${actualTo}`);
+  console.log(`Mailer: [FILE FALLBACK] Saved to ${filepath}`);
+  console.log(`Mailer: [FILE FALLBACK] Subject: "${options.subject}" → ${options.to}`);
   return { mock: true, filepath };
 };
 
-module.exports = {
-  sendMail
-};
+module.exports = { sendMail };
