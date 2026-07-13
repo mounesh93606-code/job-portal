@@ -4,7 +4,8 @@ require('dotenv').config();
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer TOKEN
+  // Also accept token via query param (for direct browser download links)
+  const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
 
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });

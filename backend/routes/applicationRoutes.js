@@ -21,4 +21,7 @@ router.post('/:id/generate-offer', verifyToken, authorizeRoles('employer', 'admi
 // Send Offer Letter PDF & Email (Employer and Admin only)
 router.post('/:id/send-offer', verifyToken, authorizeRoles('employer', 'admin'), applicationController.sendOfferLetter);
 
+// Stream Offer Letter PDF on-demand (Seeker, Employer, Admin) - token via query param for direct browser download
+router.get('/:id/offer-pdf', verifyToken, authorizeRoles('seeker', 'employer', 'admin'), applicationController.streamOfferPdf);
+
 module.exports = router;

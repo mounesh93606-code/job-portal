@@ -11,9 +11,10 @@ import './Dashboard.css';
 
 const COLORS = ['#6366f1', '#fbbf24', '#34d399', '#f87171'];
 const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [analytics, setAnalytics] = useState(null);
   const [applications, setApplications] = useState([]);
@@ -543,10 +544,10 @@ const Dashboard = () => {
                                 </a>
                               </div>
                             )}
-                            {app.status === 'Offered' && app.offer_letter_path && (
+                            {app.status === 'Offered' && app.offer_letter_text && (
                               <div style={{ marginTop: '0.4rem' }}>
                                 <a 
-                                  href={`${BASE_URL}${app.offer_letter_path}`} 
+                                  href={`${API_URL}/applications/${app.id}/offer-pdf?token=${token}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
                                   className="btn btn-secondary btn-sm"
@@ -760,9 +761,9 @@ const Dashboard = () => {
                                 </button>
                               )}
 
-                              {app.status === 'Offered' && app.offer_letter_path && (
+                              {app.status === 'Offered' && app.offer_letter_text && (
                                 <a
-                                  href={`${BASE_URL}${app.offer_letter_path}`}
+                                  href={`${API_URL}/applications/${app.id}/offer-pdf?token=${token}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="btn btn-secondary btn-sm"

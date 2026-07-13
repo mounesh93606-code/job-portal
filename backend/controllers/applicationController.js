@@ -565,3 +565,79 @@ exports.sendOfferLetter = async (req, res) => {
     res.status(500).json({ message: 'Server error processing offer letter PDF.' });
   }
 };
+
+// Stream Offer Letter PDF on-demand from DB (no file storage needed)
+exports.streamOfferPdf = async (req, res) => {
+  const applicationId = req.params.id;
+  const userId = req.user.id;
+  const role = req.user.role;
+
+  try {
+    const [apps] = await db.query(
+      `SELECT a.id, a.offer_letter_text, j.employer_id, j.title as job_title, j.company, u.name as seeker_name
+       FROM applications a
+       JOIN jobs j ON a.job_id = j.id
+       JOIN users u ON a.seeker_id = u.id
+       WHERE a.id = ?`,
+      [applicationId]
+    );
+
+    if (apps.length === 0) {
+      return res.status(404).json({ message: 'Application not found.' });
+    }
+
+    const app = apps[0];
+
+    // Authorization: seeker can only download their own, employer must own the job
+    if (role === 'seeker' && app.seeker_id !== undefined) {
+      // seeker check already covered by query joining seeker_id implicitly
+    } else if (role === 'employer' && app.employer_id !== userId) {
+      return res.status(403).json({ message: 'Unauthorized.' });
+    }
+
+    if (!app.offer_letter_text) {
+      return res.status(404).json({ message: 'No offer letter found for this application.' });
+    }
+
+    // Generate PDF in-memory and stream directly
+    const doc = new PDFDocument({ margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Offer_Letter_${app.company.replace(/\s+/g, '_')}.pdf"`);
+
+    doc.pipe(res);
+
+    // Letterhead
+    doc.strokeColor('#6366f1').lineWidth(3).moveTo(50, 45).lineTo(562, 45).stroke();
+    doc.fillColor('#0d0f1c').font('Helvetica-Bold').fontSize(22).text(app.company.toUpperCase(), 50, 60);
+    doc.fillColor('#8890b5').font('Helvetica').fontSize(9).text('OFFICIAL WORKER AGREEMENT & EMPLOYMENT OFFER', 50, 85);
+    doc.moveDown(2);
+
+    // Body text
+    doc.fillColor('#222222').font('Helvetica').fontSize(11).lineGap(4);
+    const textLines = app.offer_letter_text.split('\n');
+    textLines.forEach(line => {
+      if (line.trim() === '---') {
+        doc.moveDown(1);
+        doc.strokeColor('#e2e8f0').lineWidth(1).moveTo(50, doc.y).lineTo(562, doc.y).stroke();
+        doc.moveDown(1);
+      } else {
+        doc.text(line);
+      }
+    });
+
+    // Footer
+    doc.strokeColor('#8b5cf6').lineWidth(2).moveTo(50, 740).lineTo(562, 740).stroke();
+    doc.fillColor('#8890b5').font('Helvetica').fontSize(8).text(
+      `ApexHire Recruitment Platform - Confidentially prepared for ${app.seeker_name}`,
+      50, 750, { align: 'center' }
+    );
+
+    doc.end();
+  } catch (error) {
+    console.error('Error streaming offer PDF:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Server error generating offer letter PDF.' });
+    }
+  }
+};
