@@ -531,7 +531,7 @@ const Dashboard = () => {
                     <tbody>
                       {applications.map(app => (
                         <tr key={app.id}>
-                          <td>
+                          <td data-label="Job Title">
                             <strong>{app.job_title}</strong>
                             {app.status === 'Interviewing' && app.interview_date && (
                               <div className="interview-details-card">
@@ -559,16 +559,16 @@ const Dashboard = () => {
                               </div>
                             )}
                           </td>
-                          <td>{app.company}</td>
-                          <td><span className="flex-align"><MapPin size={14} /> {app.location}</span></td>
-                          <td><span className={`badge badge-${app.job_type.toLowerCase().replace('-', '')}`}>{app.job_type}</span></td>
-                          <td>{new Date(app.applied_at).toLocaleDateString()}</td>
-                          <td>
+                          <td data-label="Company">{app.company}</td>
+                          <td data-label="Location"><span className="flex-align"><MapPin size={14} /> {app.location}</span></td>
+                          <td data-label="Type"><span className={`badge badge-${app.job_type.toLowerCase().replace('-', '')}`}>{app.job_type}</span></td>
+                          <td data-label="Applied Date">{new Date(app.applied_at).toLocaleDateString()}</td>
+                          <td data-label="Status">
                             <span className={`badge badge-${app.status.toLowerCase()}`}>
                               {app.status}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Resume">
                             <a
                               href={`${BASE_URL}${app.resume_path}`}
                               target="_blank"
@@ -625,13 +625,13 @@ const Dashboard = () => {
                     <tbody>
                       {jobs.map(job => (
                         <tr key={job.id}>
-                          <td><strong>{job.title}</strong></td>
-                          <td>{job.company}</td>
-                          <td><span className="flex-align"><MapPin size={14} /> {job.location}</span></td>
-                          <td><span className={`badge badge-${job.type.toLowerCase().replace('-', '')}`}>{job.type}</span></td>
-                          <td><span className="flex-align"><DollarSign size={14} /> {job.salary || 'N/A'}</span></td>
-                          <td>{new Date(job.created_at).toLocaleDateString()}</td>
-                          <td>
+                          <td data-label="Job Title"><strong>{job.title}</strong></td>
+                          <td data-label="Company">{job.company}</td>
+                          <td data-label="Location"><span className="flex-align"><MapPin size={14} /> {job.location}</span></td>
+                          <td data-label="Type"><span className={`badge badge-${job.type.toLowerCase().replace('-', '')}`}>{job.type}</span></td>
+                          <td data-label="Salary"><span className="flex-align"><DollarSign size={14} /> {job.salary || 'N/A'}</span></td>
+                          <td data-label="Date Posted">{new Date(job.created_at).toLocaleDateString()}</td>
+                          <td data-label="Actions">
                             <button
                               className="btn-icon btn-delete"
                               onClick={() => handleDeleteJob(job.id)}
@@ -682,7 +682,7 @@ const Dashboard = () => {
                     <tbody>
                       {applications.map(app => (
                         <tr key={app.id}>
-                          <td>
+                          <td data-label="Candidate">
                             <strong>{app.seeker_name}</strong>
                             {app.interview_date && (
                               <div className="sub-text" style={{ color: 'var(--clr-warning)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -691,10 +691,10 @@ const Dashboard = () => {
                               </div>
                             )}
                           </td>
-                          <td>{app.job_title}</td>
-                          <td>{app.seeker_email}</td>
-                          <td>{new Date(app.applied_at).toLocaleDateString()}</td>
-                          <td>
+                          <td data-label="Job Applied">{app.job_title}</td>
+                          <td data-label="Email">{app.seeker_email}</td>
+                          <td data-label="Applied Date">{new Date(app.applied_at).toLocaleDateString()}</td>
+                          <td data-label="Resume & Details">
                             <div className="flex-align gap-sm">
                               <a
                                 href={`${BASE_URL}${app.resume_path}`}
@@ -825,19 +825,19 @@ const Dashboard = () => {
                   <tbody>
                     {adminUsers.map(u => (
                       <tr key={u.id}>
-                        <td><strong>{u.name}</strong></td>
-                        <td>{u.email}</td>
-                        <td>
+                        <td data-label="Name"><strong>{u.name}</strong></td>
+                        <td data-label="Email">{u.email}</td>
+                        <td data-label="Role">
                           <span className={`role-pill role-${u.role}`}>
                             {u.role.toUpperCase()}
                           </span>
                         </td>
-                        <td>{new Date(u.created_at).toLocaleDateString()}</td>
-                        <td>
+                        <td data-label="Registered">{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td data-label="Actions">
                           <button
                             className="btn-icon btn-delete"
                             onClick={() => handleDeleteUser(u.id)}
-                            disabled={u.id === user.id} // Cannot delete self
+                            disabled={u.id === user.id}
                             title={u.id === user.id ? 'Cannot delete self' : 'Delete User'}
                           >
                             <Trash2 size={16} />
@@ -875,14 +875,14 @@ const Dashboard = () => {
                     <tbody>
                       {applications.map(app => (
                         <tr key={app.id}>
-                          <td>
+                          <td data-label="Candidate">
                             <strong>{app.seeker_name}</strong>
                             <div className="sub-text">{app.seeker_email}</div>
                           </td>
-                          <td>{app.job_title}</td>
-                          <td>{app.company}</td>
-                          <td>{new Date(app.applied_at).toLocaleDateString()}</td>
-                          <td>
+                          <td data-label="Job Title">{app.job_title}</td>
+                          <td data-label="Company">{app.company}</td>
+                          <td data-label="Applied Date">{new Date(app.applied_at).toLocaleDateString()}</td>
+                          <td data-label="Resume">
                             <a
                               href={`${BASE_URL}${app.resume_path}`}
                               target="_blank"

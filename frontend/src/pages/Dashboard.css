@@ -430,6 +430,86 @@
   }
 }
 
+/* ── MOBILE TABLE → CARD LIST ───────────────────────────────────── */
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: var(--sp-md) var(--sp-sm) var(--sp-2xl);
+  }
+
+  /* Hide table header on mobile */
+  .dashboard-table thead {
+    display: none;
+  }
+
+  /* Each row becomes its own card */
+  .dashboard-table,
+  .dashboard-table tbody,
+  .dashboard-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .dashboard-table tbody tr {
+    border: 1px solid var(--clr-border);
+    border-radius: var(--r-md);
+    margin-bottom: var(--sp-md);
+    padding: var(--sp-md);
+    background: var(--glass-bg);
+  }
+
+  .dashboard-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Each cell stacks vertically and shows label via data-label */
+  .dashboard-table td {
+    display: flex;
+    flex-direction: column;
+    padding: var(--sp-sm) 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.9rem;
+    gap: 0.2rem;
+  }
+
+  .dashboard-table td:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  /* Show column label before value */
+  .dashboard-table td::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--clr-text-dim);
+  }
+
+  .status-select-input {
+    width: 100%;
+  }
+
+  .action-buttons-cell {
+    flex-wrap: wrap;
+  }
+
+  .interview-details-card {
+    max-width: 100%;
+  }
+
+  .pane-header.flex-between {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-md);
+  }
+
+  .pane-header.flex-between .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Interview details card for job seekers */
 .interview-details-card {
   background: rgba(245, 158, 11, 0.04);
