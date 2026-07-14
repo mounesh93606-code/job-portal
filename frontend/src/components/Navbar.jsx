@@ -99,7 +99,7 @@ const Navbar = () => {
                     </div>
                     <div className="dropdown-divider" />
                     <Link
-                      to="/dashboard"
+                      to="/settings"
                       className="dropdown-item"
                       onClick={() => setDropdownOpen(false)}
                     >
@@ -158,7 +158,7 @@ const Navbar = () => {
                     <div className="user-role">{user?.role}</div>
                   </div>
                 </div>
-                <Link to="/dashboard" className="mobile-link" onClick={() => setMenuOpen(false)}>
+                <Link to="/settings" className="mobile-link" onClick={() => setMenuOpen(false)}>
                   <Settings size={16} /> Settings
                 </Link>
                 <button
