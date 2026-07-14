@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   MapPin, Briefcase, DollarSign, Clock, ArrowLeft,
@@ -25,6 +25,7 @@ const JobDetails = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
   const [applyStatus, setApplyStatus] = useState(null); // { type: 'success'|'error', message }
+  const applyFormRef = useRef(null);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -158,7 +159,7 @@ const JobDetails = () => {
 
             {/* Application Form */}
             {showApplyForm && (
-              <div className="apply-form-card card">
+              <div className="apply-form-card card" ref={applyFormRef}>
                 <h2 className="jd-section-title">Submit Your Application</h2>
                 <form onSubmit={handleApply} className="apply-form">
                   <div className="form-group">
@@ -229,7 +230,14 @@ const JobDetails = () => {
                   !showApplyForm && (
                     <button
                       className="btn btn-primary btn-full btn-lg"
-                      onClick={() => { setShowApplyForm(true); setApplyStatus(null); }}
+                      onClick={() => {
+                        setShowApplyForm(true);
+                        setApplyStatus(null);
+                        // Scroll to form after React renders it
+                        setTimeout(() => {
+                          applyFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 50);
+                      }}
                     >
                       <Send size={18} /> Apply Now
                     </button>
