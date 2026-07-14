@@ -1,5 +1,5 @@
 /* Jobs Page */
-.jobs-page { padding: var(--sp-2xl) 0 var(--sp-3xl); }
+.jobs-page { padding: var(--sp-2xl) 0 var(--sp-3xl); overflow-x: hidden; width: 100%; }
 
 .jobs-header {
   display: flex;
@@ -21,12 +21,20 @@
   overflow: hidden;
 }
 
+.search-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: 0 0.5rem;
+}
+
 .search-bar-field {
   display: flex;
   align-items: center;
   gap: var(--sp-sm);
   flex: 1;
   padding: 0.6rem 1rem;
+  min-width: 0;
 }
 
 .search-icon { color: var(--clr-text-dim); flex-shrink: 0; }
@@ -219,6 +227,33 @@
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--sp-md);
+    gap: var(--sp-sm);
+    border-radius: var(--r-lg);
+  }
+  .search-bar-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--clr-border);
+  }
+  .search-bar-actions {
+    width: 100%;
+    padding: 0;
+  }
+  .filter-toggle {
+    flex: 1;
+    justify-content: center;
+    padding: 0.75rem 1.2rem;
+  }
+  .clear-filters {
+    margin-right: 0;
+  }
 }
 
 @media (max-width: 640px) {

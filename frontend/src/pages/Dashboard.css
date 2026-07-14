@@ -2,6 +2,8 @@
 .dashboard-page {
   padding: var(--sp-xl) var(--sp-lg) var(--sp-3xl);
   min-height: calc(100vh - 70px);
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .dashboard-layout {
@@ -142,7 +144,7 @@
 /* Charts styles */
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   gap: var(--sp-lg);
   margin-top: var(--sp-xl);
 }

@@ -1,4 +1,8 @@
 /* ── HOME PAGE ──────────────────────────────────────────────────────── */
+.home-page {
+  overflow-x: hidden;
+  width: 100%;
+}
 
 /* Hero */
 .hero {
@@ -17,7 +21,7 @@
 }
 
 .hero-glow-1 {
-  width: 600px;
+  width: min(600px, 100vw);
   height: 400px;
   background: rgba(99,102,241,0.15);
   top: -100px;
@@ -26,7 +30,7 @@
 }
 
 .hero-glow-2 {
-  width: 400px;
+  width: min(400px, 80vw);
   height: 300px;
   background: rgba(139,92,246,0.12);
   bottom: 0;
@@ -94,6 +98,7 @@
   gap: var(--sp-sm);
   flex: 1;
   padding: 0.5rem 1.2rem;
+  min-width: 0;
 }
 
 .search-icon { color: var(--clr-text-dim); flex-shrink: 0; }
@@ -377,4 +382,8 @@
   .jobs-grid { grid-template-columns: 1fr; }
   .cta-grid { grid-template-columns: 1fr; }
   .section-header { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
 }

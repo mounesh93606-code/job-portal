@@ -91,19 +91,21 @@ const Jobs = () => {
             />
           </div>
           <div className="search-bar-divider" />
-          <button
-            className={`filter-toggle ${filtersOpen ? 'active' : ''}`}
-            onClick={() => setFiltersOpen(!filtersOpen)}
-          >
-            <SlidersHorizontal size={16} />
-            Filters
-            {hasFilters && <span className="filter-dot" />}
-          </button>
-          {hasFilters && (
-            <button className="clear-filters" onClick={clearFilters} title="Clear filters">
-              <X size={15} />
+          <div className="search-bar-actions">
+            <button
+              className={`filter-toggle ${filtersOpen ? 'active' : ''}`}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              <SlidersHorizontal size={16} />
+              Filters
+              {hasFilters && <span className="filter-dot" />}
             </button>
-          )}
+            {hasFilters && (
+              <button className="clear-filters" onClick={clearFilters} title="Clear filters">
+                <X size={15} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Type Filters */}
